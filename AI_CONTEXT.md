@@ -113,6 +113,45 @@ api:on_command(cmd: string, callback: function(player, ...args)) -> RBXScriptCon
 
 -- Redeems all codes
 api:redeem_codes() -> void
+
+-- Sets server-side CFrame (Useful for clicking shop buttons remotely)
+api:set_server_cframe(cframe: CFrame) -> void
+```
+
+## Global State Management
+The cheat uses `LinoriaLib` standards for global flags. You can access these in `getgenv().Options` and `getgenv().Toggles`.
+
+```lua
+-- Accessing a toggle state
+if Toggles.MyToggle and Toggles.MyToggle.Value then
+    print("Toggle is on")
+end
+
+-- Accessing a slider/dropdown/color value
+local speed = Options.SpeedSlider.Value
+local color = Options.EspColor.Value -- Returns Color3
+```
+
+## Best Practices & Patterns
+
+### Robust UI Creation
+Always check if a tab exists before adding it to avoid duplicates when re-executing.
+```lua
+local Tab = api:GetTab("Visuals") or api:AddTab("Visuals")
+local Group = Tab:AddLeftGroupbox("My Addon")
+```
+
+### Server Interaction (buying items)
+To interact with shop items without moving the camera, use `api:set_server_cframe`.
+```lua
+local function BuyItem(part)
+    -- Move server hitbox to the button
+    api:set_server_cframe(part.CFrame)
+    -- Fire click detector
+    fireclickdetector(part.ClickDetector)
+    -- Wait for replication
+    task.wait(0.1)
+end
 ```
 
 ## Few-Shot Examples
@@ -167,6 +206,30 @@ api:ragebot_strafe_override(function(curr, unsafe, target)
     local offset = Vector3.new(math.sin(angle)*radius, 0, math.cos(angle)*radius)
     local goal = target.Position + offset
     
-    return CFrame.lookAt(goal, target.Position), target.Position
-end)
+### Example 4: Advanced Safety (Mod Detection)
+```lua
+local function IsMod(player)
+    if player == game.Players.LocalPlayer then return false end
+    
+    -- Check specific groups (Da Hood Verification, etc.)
+    local modGroups = {10604500, 1234567} 
+    
+    for _, id in ipairs(modGroups) do
+        local success, inGroup = pcall(function() return player:IsInGroup(id) end)
+        if success and inGroup then
+            local role = player:GetRoleInGroup(id)
+            if role == "Moderator" or role == "Admin" then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+api:add_connection(game.Players.PlayerAdded:Connect(function(p)
+    if IsMod(p) then
+        api:notify("Mod Detected: " .. p.Name, 10)
+        -- Optional: api:kick() or crash behavior
+    end
+end))
 ```
