@@ -141,6 +141,21 @@ local Tab = api:GetTab("Visuals") or api:AddTab("Visuals")
 local Group = Tab:AddLeftGroupbox("My Addon")
 ```
 
+### Dynamic UI (Visibility)
+You can hide/show elements dynamically based on other toggles.
+```lua
+local Group = Tab:AddLeftGroupbox("Settings")
+local Master = Group:AddToggle("Master", { Text = "Master Switch" })
+local SubOption = Group:AddSlider("Sub", { Text = "Hidden Slider" })
+
+local function Update()
+    SubOption:SetVisible(Master.Value)
+end
+
+Master:OnChanged(Update)
+Update() -- Init
+```
+
 ### Server Interaction (buying items)
 To interact with shop items without moving the camera, use `api:set_server_cframe`.
 ```lua
@@ -262,5 +277,19 @@ local function Load(name)
     end
 end
 
-Load("MyAddon.lua")
+### Example 7: Vehicle Teleport (Void Method)
+```lua
+local function VoidVehicle()
+    local char = game.Players.LocalPlayer.Character
+    local seat = char and char.Humanoid.SeatPart
+    if seat then
+        local vehicle = seat.Parent
+        -- Move vehicle way below map to "void" it
+        if vehicle.PrimaryPart then
+            vehicle:PivotTo(CFrame.new(0, -900, 0))
+        end
+    else
+        api:notify("Sit in vehicle first!", 3)
+    end
+end
 ```
