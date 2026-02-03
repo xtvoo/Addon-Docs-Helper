@@ -227,9 +227,40 @@ local function IsMod(player)
 end
 
 api:add_connection(game.Players.PlayerAdded:Connect(function(p)
-    if IsMod(p) then
-        api:notify("Mod Detected: " .. p.Name, 10)
-        -- Optional: api:kick() or crash behavior
+### Example 5: Advanced Physics (Glue/Stick)
+*Note: This uses `sethiddenproperty`, a powerful internal function.*
+```lua
+local function EnableGlue(target)
+    local myRoot = game.Players.LocalPlayer.Character.HumanoidRootPart
+    local targetRoot = target.Character.HumanoidRootPart
+    
+    -- "PhysicsRepRootPart" forces the engine to replicate our root 
+    -- as relative to the target's root.
+    if sethiddenproperty then
+        sethiddenproperty(myRoot, "PhysicsRepRootPart", targetRoot)
     end
-end))
+    
+    -- Move server-side hitbox to match
+    api:add_connection(game:GetService("RunService").Heartbeat:Connect(function()
+        api:set_desync_cframe(targetRoot.CFrame * CFrame.new(0, 5, 0))
+    end))
+end
+```
+
+### Example 6: Secure Script Loader
+```lua
+local Repo = "https://raw.githubusercontent.com/username/repo/main/"
+
+local function Load(name)
+    local url = Repo .. name:gsub(" ", "%%20") -- URL Encode spaces
+    local success, result = pcall(function() 
+        return loadstring(game:HttpGet(url))() 
+    end)
+    if not success then
+        api:notify("Failed to load: " .. name, 5)
+        warn(result)
+    end
+end
+
+Load("MyAddon.lua")
 ```
